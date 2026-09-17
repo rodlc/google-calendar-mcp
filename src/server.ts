@@ -9,6 +9,7 @@ import { TokenManager } from './auth/tokenManager.js';
 
 // Import tool registry
 import { ToolRegistry } from './tools/registry.js';
+import { CalendarRegistry } from './services/CalendarRegistry.js';
 
 // Import account management handler
 import { ManageAccountsHandler, ServerContext } from './handlers/core/ManageAccountsHandler.js';
@@ -49,8 +50,14 @@ export class GoogleCalendarMcpServer {
     // 3. Handle startup authentication based on transport type
     await this.handleStartupAuthentication();
 
+    // 3.5. Eager-load calendar names for dynamic tool schemas
+    const calendarNames = await CalendarRegistry.getInstance().eagerLoad(this.accounts);
+    if (calendarNames.length > 0) {
+      process.stderr.write(`Available calendars: ${calendarNames.join(', ')}\n`);
+    }
+
     // 4. Set up Modern Tool Definitions
-    this.registerTools();
+    this.registerTools(calendarNames);
 
     // 5. Set up Graceful Shutdown
     this.setupGracefulShutdown();
@@ -98,8 +105,8 @@ export class GoogleCalendarMcpServer {
     }
   }
 
-  private registerTools(): void {
-    ToolRegistry.registerAll(this.server, this.executeWithHandler.bind(this), this.config);
+  private registerTools(calendarNames?: string[]): void {
+    ToolRegistry.registerAll(this.server, this.executeWithHandler.bind(this), this.config, calendarNames);
 
     // Register account management tools separately (they need special context)
     this.registerAccountManagementTools();

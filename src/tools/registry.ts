@@ -913,8 +913,23 @@ export class ToolRegistry {
       handler: any,
       args: any
     ) => Promise<{ content: Array<{ type: "text"; text: string }> }>,
-    config?: ServerConfig
+    config?: ServerConfig,
+    calendarNames?: string[]
   ) {
+    if (calendarNames && calendarNames.length > 0) {
+      const desc = `Calendar identifier. Available calendars: primary, ${calendarNames.join(', ')}`;
+      for (const tool of this.tools) {
+        if (tool.name === 'get-freebusy') continue;
+        const shape = this.extractSchemaShape(tool.schema);
+        if (shape && 'calendarId' in shape) {
+          tool.customInputSchema = {
+            ...shape,
+            calendarId: shape.calendarId.describe(desc)
+          };
+        }
+      }
+    }
+
     // Validate enabledTools if provided
     if (config?.enabledTools) {
       if (config.enabledTools.length === 0) {

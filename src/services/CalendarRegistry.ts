@@ -261,6 +261,16 @@ export class CalendarRegistry {
     this.inFlightRequests.clear();
   }
 
+  async eagerLoad(accounts: Map<string, OAuth2Client>): Promise<string[]> {
+    try {
+      const unified = await this.getUnifiedCalendars(accounts);
+      return unified.map(c => c.displayName);
+    } catch (error) {
+      process.stderr.write(`Warning: Failed to eager-load calendar list: ${error instanceof Error ? error.message : error}\n`);
+      return [];
+    }
+  }
+
   /**
    * Resolve a calendar name or ID to a calendar ID and preferred account
    * Searches across all accounts for matching calendars by name
