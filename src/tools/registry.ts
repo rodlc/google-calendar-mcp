@@ -687,6 +687,11 @@ interface ToolDefinition {
 }
 
 
+const READ_ONLY_TOOLS = new Set([
+  "list-calendars", "list-events", "search-events", "get-event",
+  "list-colors", "get-freebusy", "get-current-time"
+]);
+
 export class ToolRegistry {
   private static extractSchemaShape(schema: z.ZodType<any>): any {
     const schemaAny = schema as any;
@@ -968,7 +973,8 @@ export class ToolRegistry {
         tool.name,
         {
           description: tool.description,
-          inputSchema: tool.customInputSchema || this.extractSchemaShape(tool.schema)
+          inputSchema: tool.customInputSchema || this.extractSchemaShape(tool.schema),
+          annotations: READ_ONLY_TOOLS.has(tool.name) ? { readOnlyHint: true } : undefined
         },
         async (args: any) => {
           // Preprocess: Normalize datetime fields (convert object format to string format)
